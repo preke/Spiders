@@ -9,6 +9,7 @@ import scrapy
 
 class urlsItem(scrapy.Item):
     url = scrapy.Field()
+    id = scrapy.Field()
 
 class ShopItem(scrapy.Item):
     # define the fields for your item here like:

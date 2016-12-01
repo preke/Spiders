@@ -27,9 +27,10 @@ class MySQLPipeline(object):
     # http: // www.cnblogs.com / fnng / p / 3565912.html
     def process_item(self, item, spider):
         cur = self.connection.cursor()
+        # insert_url = 'insert into student values(%s, %s)'
         a = cur.execute('select * from url')
         print a
-
+        return item
 
 
 # class XiuxianPipeline(object):
