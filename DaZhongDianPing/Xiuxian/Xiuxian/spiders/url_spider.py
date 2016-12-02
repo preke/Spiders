@@ -6,17 +6,25 @@ from bs4 import BeautifulSoup
 import urlparse
 from scrapy.http import Request
 from scrapy.http import Response
-from Xiuxian.items import urlItem
+from Xiuxian.items import urlsItem
 import re
 
 
-class FunSpider(scrapy.Spider):
-    name = "fun"
+class UrlSpider(scrapy.Spider):
+    name = "url"
     root = 'http://www.dianping.com'
+    cnt = 0
+    page = 1
     shop_urls = []
     start_urls = [
         'http://www.dianping.com/search/category/4/30'
     ]
+
+    # def start_requests(self):
+    #     url = self.start_urls[self.page]
+    #     self.page += 1
+    #     print str(self.page) + ' Page'
+    #     return [Request(url, callback=self.parse)]
 
     def parse(self, response):
         temp = response.body
@@ -27,15 +35,26 @@ class FunSpider(scrapy.Spider):
             str = li.find('div', class_='tit').find('a')['href']
             self.shop_urls.append(self.root+ str)
 
-        # for url in self.shop_urls:
-        #     item = urlItem()
-        #     item['url'] = url
-        #     item['id'] =
+        for url in self.shop_urls:
+            item = urlsItem()
 
+            num = ''
+            for ch in url:
+                try:
+                    int(ch)
+                    num += ch
+                except:
+                    pass
+
+            item['url'] = url
+            item['id'] = num
+            yield item
+
+        print 'page: ', self.page
+        self.page += 1
         try:
             next_page = soup.find('div', class_ = 'page').find('a', class_ = 'next', title = '下一页')
             url = self.root + next_page['href']
-
-            return [Request(url)]
+            yield Request(url)
         except:
             pass

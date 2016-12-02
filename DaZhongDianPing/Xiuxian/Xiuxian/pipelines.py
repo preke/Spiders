@@ -24,12 +24,13 @@ class MySQLPipeline(object):
             db = settings['MYSQL_DBNAME'],
         )
 
-    # http: // www.cnblogs.com / fnng / p / 3565912.html
+
     def process_item(self, item, spider):
         cur = self.connection.cursor()
-        # insert_url = 'insert into student values(%s, %s)'
-        a = cur.execute('select * from url')
-        print a
+        insert_url = 'insert into url values(%s, %s)'
+        cur.execute(insert_url, (item['url'], item['id']))
+        cur.close()
+        self.connection.commit()
         return item
 
 

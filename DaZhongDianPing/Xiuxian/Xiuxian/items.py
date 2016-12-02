@@ -14,6 +14,10 @@ class urlsItem(scrapy.Item):
 class ShopItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
+    name = scrapy.Field()
+    tel = scrapy.Field()
+    addr = scrapy.Field()
+
     pass
 
 
