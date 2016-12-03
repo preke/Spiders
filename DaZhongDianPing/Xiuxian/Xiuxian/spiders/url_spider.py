@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 import urlparse
 from scrapy.http import Request
 from scrapy.http import Response
-from Xiuxian.items import urlsItem
+from Xiuxian.items import UrlsItem
 import re
 
 
@@ -36,7 +36,7 @@ class UrlSpider(scrapy.Spider):
             self.shop_urls.append(self.root+ str)
 
         for url in self.shop_urls:
-            item = urlsItem()
+            item = UrlsItem()
 
             num = ''
             for ch in url:
@@ -47,7 +47,7 @@ class UrlSpider(scrapy.Spider):
                     pass
 
             item['url'] = url
-            item['id'] = num
+            item['_id'] = num
             yield item
 
         print 'page: ', self.page

@@ -59,12 +59,23 @@ DOWNLOADER_MIDDLEWARES = {
 }
 
 
-# start MySQL database configure setting
-MYSQL_HOST = 'localhost'
-MYSQL_DBNAME = 'DianPing'
-MYSQL_USER = 'debian-sys-maint'
-MYSQL_PASSWD = 'V9kflS1yEB4h3bRw'
+# MySQL database configure setting
+# MYSQL_HOST = 'localhost'
+# MYSQL_DBNAME = 'DianPing'
+# MYSQL_USER = 'debian-sys-maint'
+# MYSQL_PASSWD = 'V9kflS1yEB4h3bRw'
 # end of MySQL database configure setting
+
+
+# MongoDB
+MONGODB_SERVER = "localhost"
+MONGODB_PORT = 27017
+MONGODB_DB = "DianPing"
+# MONGODB_COLLECTION = "questions"
+# MongoDB end
+
+
+
 
 # Enable or disable extensions
 # See http://scrapy.readthedocs.org/en/latest/topics/extensions.html
@@ -75,7 +86,7 @@ MYSQL_PASSWD = 'V9kflS1yEB4h3bRw'
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   'Xiuxian.pipelines.MySQLPipeline': 300,
+   'Xiuxian.pipelines.MongoDBPipeline': 300,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
