@@ -22,6 +22,7 @@ class MongoDBPipeline(object):
         db=connection[settings['MONGODB_DB']]
         self.url_collection = db['url']
         self.shop_collection = db['shop']
+        self.promotion_collection = db['promotion']
 
     def saveOrUpdate(self, collection, item):
         try:
@@ -35,6 +36,12 @@ class MongoDBPipeline(object):
             self.saveOrUpdate(self.url_collection, item)
         elif spider.name == 'shop':
             self.saveOrUpdate(self.shop_collection, item)
+        elif spider.name == 'promotion':
+            self.saveOrUpdate(self.promotion_collection, item)
+            # print
+            # print 'item-------------------------------------here'
+            # print item
+            # pass
 
 
 

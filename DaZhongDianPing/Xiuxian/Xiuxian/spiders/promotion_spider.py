@@ -13,82 +13,108 @@ import requests
 class PromotionSpider(scrapy.Spider):
     name = "promotion"
     root = 'http://www.dianping.com'
-    start_urls = [
-        'http://t.dianping.com/deal/10953643'
-    ]
+    start_urls = []
+    urls = []
+    item = PromotionItem()
+    cnt = -1
+    def __init__(self):
+        urlGOTs = [
+            'http://t.dianping.com/deal/10953643',
+            'http://t.dianping.com/deal/21510875'
+        ]
+        self.start_urls.append(urlGOTs[0])
+        self.urls=urlGOTs[1:]
 
-    # def start_requests(self):
-    #     url = self.start_urls[self.page]
-    #     self.page += 1
-    #     print str(self.page) + ' Page'
-    #     return [Request(url, callback=self.parse)]
+    def find(self, s1, s2):
+        for ch in s1:
+            if ch == s2:
+                return True
+
+        return False
+
+    def make_up_ajax(self, s1, id):
+        #'http://t.dianping.com/ajax/detailDealRate?dealGroupId=10953643&pageNo=1&filtEmpty=1&timestamp=123123123'
+        ans = 'http://t.dianping.com/ajax/detailDealRate?dealGroupId='
+        ans += id
+        ans += '&pageNo=1&filtEmpty=1&timestamp=123123123'
+        return ans
+
 
     def parse(self, response):
-        temp = response.body
-        item = PromotionItem()
-        item['_id'] = ''
-        str1 = response.url
-        for ch in str1:
+        s1 = response.url
+        if self.find(s1, 'j'):
+            print s1
+            temp = response.body
+            soup = BeautifulSoup(temp, from_encoding='utf-8')
+            self.item['num_of_comment'] = int(soup.find('p', class_='c-num').find('b').get_text())
+            fig = soup.find('div',class_='op-statis Fix').find('div',class_='fig-show').find_all('p', class_='list')
+            # print len(fig)
+            self.item['five_star'] = int(fig[0].find('span', class_='n-bg J_fig')['data'])
+            self.item['four_star'] = int(fig[1].find('span', class_='n-bg J_fig')['data'])
+            self.item['three_star'] = int(fig[2].find('span', class_='n-bg J_fig')['data'])
+            self.item['two_star'] = int(fig[3].find('span', class_='n-bg J_fig')['data'])
+            self.item['one_star'] = int(fig[4].find('span', class_='n-bg J_fig')['data'])
+
+            yield self.item
+            self.item = PromotionItem()
+            print self.urls[self.cnt]
+            self.cnt += 1
             try:
-                int(ch)
-                item['_id'] += ch
+                yield Request(self.urls[self.cnt])
             except:
                 pass
 
-        soup = BeautifulSoup(temp,from_encoding='utf-8')
-        main = soup.find('div', class_='bd')
-        title = main.find('h1',class_='title')
-        item['name'] = title.get_text().strip()
+        else:
+            print '-----: ' + s1
+            self.item['_id'] = ''
+            for ch in s1:
+                try:
+                    int(ch)
+                    self.item['_id'] += ch
+                except:
+                    pass
 
-        sub_title = main.find('h2',class_='sub-title').find('span').get_text()
-        item['desc'] = sub_title
+            temp = response.body
+            soup = BeautifulSoup(temp, from_encoding='utf-8')
+            main = soup.find('div', class_='bd')
+            title = main.find('h1', class_='title')
+            self.item['name'] = title.get_text().strip()
 
-        price = main.find('div', class_='price-wrap').find('h3', class_='price').find('span').get_text()
-        # print price
-        num = float(0)
-        for ch in price:
-            try:
-                int(ch)
-                num *= 10
-                num += int(ch)
-            except:
-                pass
+            sub_title = main.find('h2', class_='sub-title').find('span').get_text()
+            self.item['desc'] = sub_title
 
-        item['price'] = num
+            price = main.find('div', class_='price-wrap').find('h3', class_='price').find('span').get_text()
+            # print price
+            num = float(0)
+            for ch in price:
+                try:
+                    int(ch)
+                    num *= 10
+                    num += int(ch)
+                except:
+                    pass
 
-        action_box = main.find('div', class_='action-box')
-        sold = action_box.find('em', class_='J_current_join').get_text()
+            self.item['price'] = num
 
-        num = float(0)
-        for ch in sold:
-            try:
-                int(ch)
-                num *= 10
-                num += int(ch)
-            except:
-                pass
+            action_box = main.find('div', class_='action-box')
+            sold = action_box.find('em', class_='J_current_join').get_text()
 
-        item['sold'] = num
+            num = float(0)
+            for ch in sold:
+                try:
+                    int(ch)
+                    num *= 10
+                    num += int(ch)
+                except:
+                    pass
 
-        star = action_box.find('span', class_='star-rate').get_text()
-        item['stars'] = float(star)
+            self.item['sold'] = num
 
-        av_date = main.find('div', class_='validate-date').find('span').get_text()
-        item['av_time'] = av_date
+            star = action_box.find('span', class_='star-rate').get_text()
+            self.item['stars'] = float(star)
 
-        request1 = requests.get(
-            'http://t.dianping.com/ajax/detailDealRate',
-            params = {
-                'dealGroupId': item['_id'],
-                'pageNo': 1,
-                'filtEmpty': 1,
-                'timestamp': 123234534,
-            },
-            allow_redirects=False
-        )
+            av_date = main.find('div', class_='validate-date').find('span').get_text()
+            self.item['av_time'] = av_date
 
-        print request1.headers
-        # print soup
-
-        #op_bar = soup.find('div', class_='content').find('div', class_='comment-box J_comment_box').find('div', class_='J_main_comment')#.find('div', class_='op-bar')#.find('div', class_='op-statis Fix')
-        #print op_bar
+            url_temp = self.make_up_ajax(s1, self.item['_id'])
+            yield Request(url_temp)
