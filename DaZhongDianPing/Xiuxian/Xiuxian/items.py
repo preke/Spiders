@@ -29,6 +29,7 @@ class ShopItem(scrapy.Item):
     label_2 = scrapy.Field()
     label_3 = scrapy.Field()
     prom = scrapy.Field()
+    labels = scrapy.Field()
     # update_time = scrapy.Field()
 
 class PromotionItem(scrapy.Item):
@@ -51,4 +52,23 @@ class PromotionItem(scrapy.Item):
 class CommentItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
-    pass
+    _id = scrapy.Field()
+    user_id = scrapy.Field()
+    user_name = scrapy.Field()
+    stars = scrapy.Field()
+    label_1 = scrapy.Field()
+    label_2 = scrapy.Field()
+    label_3 = scrapy.Field()
+    content = scrapy.Field()
+    avg_cost = scrapy.Field()
+    likes = scrapy.Field()
+
+
+class UserItem(scrapy.Item):
+    _id = scrapy.Field()
+    user_name = scrapy.Field()
+    is_vip = scrapy.Field()
+    contribution = scrapy.Field()
+    birthday = scrapy.Field()
+    city = scrapy.Field()
+    gender = scrapy.Field()

@@ -14,7 +14,21 @@ from scrapy.conf import settings
 class ShopSpider(scrapy.Spider):
     name = "shop"
     root = 'http://www.dianping.com'
-    start_urls = ['http://www.dianping.com/shop/22222604']
+    start_urls = ['http://www.dianping.com/shop/19403150']
+
+    def deal_label(self, str):
+        ans = ''
+        num = 0
+        for ch in str:
+            if ch != '(' and ch != ')':
+                try:
+                    int(ch)
+                    num *= 10
+                    num += int(ch)
+                except:
+                    ans += ch
+
+        return [ans, num]
 
     def parse(self, response):
 
@@ -152,6 +166,18 @@ class ShopSpider(scrapy.Spider):
                 pass
 
         item['prom'] = prom
+
+        item['labels'] = dict()
+        try:
+            labels = soup.find('div', id='comment').find('div', class_='J-comment-condition').find_all('span', class_='J-summary')
+            # print labels
+            for label in labels:
+                ans = self.deal_label(label.get_text())
+                # print ans[0].encode('utf-8')
+                item['labels'][ ans[0].encode('utf-8')] = ans[1]
+                print item['labels']
+        except:
+            pass
 
         yield item
 
