@@ -17,7 +17,7 @@ class UrlSpider(scrapy.Spider):
     page = 1
     shop_urls = []
     start_urls = [
-        'http://www.dianping.com/search/category/4/30'
+        'http://www.dianping.com/search/category/4/10'
     ]
 
     # def start_requests(self):

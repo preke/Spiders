@@ -8,13 +8,31 @@ from scrapy.http import Request
 from scrapy.http import Response
 from Xiuxian.items import ShopItem
 import re
+import pymongo
 from scrapy.conf import settings
 
 
 class ShopSpider(scrapy.Spider):
     name = "shop"
     root = 'http://www.dianping.com'
-    start_urls = ['http://www.dianping.com/shop/19403150']
+    start_urls = []
+    urls = []
+    cnt = -1
+    def __init__(self):
+        connection = pymongo.MongoClient(
+            settings['MONGODB_SERVER'],
+            settings['MONGODB_PORT']
+        )
+        db=connection[settings['MONGODB_DB']]
+        set = db['url'].find({})
+        connection.close()
+        urls = []
+        for elem in set:
+            urls.append(elem['url'])
+
+        self.start_urls.append(urls[0])
+        self.urls = urls[1:]
+
 
     def deal_label(self, str):
         ans = ''
@@ -31,9 +49,9 @@ class ShopSpider(scrapy.Spider):
         return [ans, num]
 
     def parse(self, response):
-
         temp = response.body
         soup = BeautifulSoup(temp, from_encoding='utf-8')
+        # print soup
         content = soup.find('div', id='basic-info')
         # print content
         item = ShopItem()
@@ -156,14 +174,17 @@ class ShopSpider(scrapy.Spider):
                 pass
 
         prom = []
-        sales = soup.find('div', id='sales')
-        links = sales.find_all('a')
-        for link in links:
-            try:
-                if link['href'] !='javascript:;':
-                    prom.append(link['href'])
-            except:
-                pass
+        try:
+            sales = soup.find('div', id='sales')
+            links = sales.find_all('a')
+            for link in links:
+                try:
+                    if link['href'] !='javascript:;':
+                        prom.append(link['href'])
+                except:
+                    pass
+        except:
+            pass
 
         item['prom'] = prom
 
@@ -175,10 +196,17 @@ class ShopSpider(scrapy.Spider):
                 ans = self.deal_label(label.get_text())
                 # print ans[0].encode('utf-8')
                 item['labels'][ ans[0].encode('utf-8')] = ans[1]
-                print item['labels']
+                # print item['labels']
         except:
             pass
 
         yield item
+
+        print self.urls[self.cnt+1]
+        self.cnt += 1
+        try:
+            yield Request(self.urls[self.cnt])
+        except:
+            pass
 
 

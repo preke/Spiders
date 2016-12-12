@@ -22,7 +22,7 @@ NEWSPIDER_MODULE = 'Xiuxian.spiders'
 ROBOTSTXT_OBEY = True
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-#CONCURRENT_REQUESTS = 32
+CONCURRENT_REQUESTS = 32
 
 # Configure a delay for requests for the same website (default: 0)
 # See http://scrapy.readthedocs.org/en/latest/topics/settings.html#download-delay
@@ -33,8 +33,8 @@ ROBOTSTXT_OBEY = True
 #CONCURRENT_REQUESTS_PER_IP = 16
 
 # Disable cookies (enabled by default)
-#COOKIES_ENABLED = False
-
+COOKIES_ENABLED = False
+DOWNLOAD_DELAY=0.3
 # Disable Telnet Console (enabled by default)
 #TELNETCONSOLE_ENABLED = False
 
@@ -55,7 +55,10 @@ ROBOTSTXT_OBEY = True
 DOWNLOADER_MIDDLEWARES = {
    # 'Xiuxian.middlewares.MyCustomDownloaderMiddleware': 543,
     'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware':None,
-    'Xiuxian.middlewares.RotateUserAgentMiddleware':400,
+    'Xiuxian.middlewares.RotateUserAgentMiddleware':300,
+    'scrapy.contrib.downloadermiddleware.httpproxy.HttpProxyMiddleware': 110,
+    'Xiuxian.middlewares.ProxyMiddleware': 100,
+
 }
 
 
@@ -73,7 +76,7 @@ MONGODB_PORT = 27017
 MONGODB_DB = "DianPing"
 # MONGODB_COLLECTION = "questions"
 # MongoDB end
-
+CLOSESPIDER_ERRORCOUNT = 20
 
 
 
@@ -109,3 +112,12 @@ ITEM_PIPELINES = {
 #HTTPCACHE_DIR = 'httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+PROXIES = [
+    # {'ip_port': '172.18.180.84:9000'},
+    {'ip_port': '172.18.182.61:9999'},
+    {'ip_port': '172.18.182.16:9999'}, #Ubuntu(3)
+    {'ip_port': '172.18.182.165:9999'}, #Ubuntu 64wei
+    {'ip_port': '172.18.181.237:9990'}, #u2
+    {'ip_port': '172.18.182.170:9797'}, #u3
+
+]

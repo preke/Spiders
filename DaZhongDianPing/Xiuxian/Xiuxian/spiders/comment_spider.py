@@ -9,27 +9,43 @@ from scrapy.http import Response
 from Xiuxian.items import CommentItem
 from Xiuxian.items import UserItem
 import re
+import pymongo
+import time
+from scrapy.conf import settings
 
 
 class CommentSpider(scrapy.Spider):
+
     name = "comment"
-    root = 'http://www.dianping.com/shop/22987445/review_more'
+    shop_urls = []
     cnt = 0
     page = 1
     user_home = 'http://www.dianping.com/member/'
-    shop_urls = []
-    start_urls = [
-        'http://www.dianping.com/shop/22987445/review_more'
-    ]
-
-    # def start_requests(self):
-    #     url = self.start_urls[self.page]
-    #     self.page += 1
-    #     print str(self.page) + ' Page'
-    #     return [Request(url, callback=self.parse)]
+    urls = []
+    start_urls = []
 
     def __init__(self):
-        pass
+        connection = pymongo.MongoClient(
+            settings['MONGODB_SERVER'],
+            settings['MONGODB_PORT']
+        )
+        db = connection[settings['MONGODB_DB']]
+        sets = db['url'].find({})
+
+        urls = []
+        shop_urls = []
+        for elem in sets:
+
+            str = elem['url'] + '/review_more'
+            shop_urls.append(str)
+            urls.append(str)
+
+        self.start_urls.append(urls[0])
+        self.urls = urls[1:]
+        self.shop_urls = shop_urls
+
+
+        connection.close()
 
     def deal_num(self, str):
         ans = ''
@@ -47,7 +63,6 @@ class CommentSpider(scrapy.Spider):
 
 
     def user(self, response):
-        # print response.url
         temp = response.body
         soup = BeautifulSoup(temp, from_encoding='utf-8')
         item = UserItem()
@@ -63,7 +78,7 @@ class CommentSpider(scrapy.Spider):
         item['_id'] = id
 
         txt = soup.find('div', class_='txt')
-        item['user_name'] = txt.find('h2', class_='name').get_text()
+        item['user_name'] = txt.find('h2', class_='name').get_text().encode('utf-8')
         item['is_vip'] = 0
         try:
             vip = txt.find('div', class_='vip').find('i',class_='icon-vip')
@@ -85,27 +100,43 @@ class CommentSpider(scrapy.Spider):
 
         item['contribution'] = num
 
-        item['gender'] = col_exp.find('span', class_='user-groun').find('i')['class'][0]
+        try:
+            item['gender'] = col_exp.find('span', class_='user-groun').find('i')['class'][0]
+        except:
+            item['gender'] = ''
 
-        item['city'] = col_exp.find('span', class_='user-groun').get_text()
+        try:
+            item['city'] = col_exp.find('span', class_='user-groun').get_text()
+        except:
+            item['city'] = ''
 
         try:
             msg = soup.find('div', class_='aside').find('div', class_='user-message').find('ul').find_all('li')[1].get_text()
             item['birthday'] = msg[3:]
         except:
-            pass
+            item['birthday'] = ''
 
         yield item
 
 
-
-
-
     def parse(self, response):
-        print response.url
+        str = response.url
         temp = response.body
         soup = BeautifulSoup(temp,from_encoding='utf-8')
+
         try:
+            id = ''
+            for ch in str:
+                if ch == '?':
+                    break
+                try:
+                    int(ch)
+                    id += ch
+                except:
+                    pass
+
+
+
             comment_mode = soup.find('div', class_='comment-mode')
             lists = comment_mode.find('div', class_='comment-list').find('ul').find_all('li')
             new_list = []
@@ -116,32 +147,52 @@ class CommentSpider(scrapy.Spider):
                 except:
                     pass
 
-            for li in new_list[:1]:
+            for li in new_list:
+
                 item = CommentItem()
+                item['shop_id'] = id
                 item['_id'] = li['data-id']
-                item['user_id'] = li.find('a', class_='J_card')['user-id']
+                try:
+                    item['user_id'] = li.find('a', class_='J_card')['user-id']
+                except:
+                    item['user_id'] = ''
 
                 home = self.user_home + item['user_id']
+                print response.url + '   here'
                 yield Request(home, callback=self.user)
 
-                item['user_name'] = li.find('p', class_='name').find('a').get_text().encode('utf-8')
+                try:
+                    item['user_name'] = li.find('p', class_='name').find('a').get_text().encode('utf-8')
+                except:
+                    item['user_name'] = ''
+
+
                 content = li.find('div', class_='content')
                 user_info = content.find('div', class_='user-info')
-                stars = user_info.find('span', class_='item-rank-rst')['class']
-                tp = self.deal_num(stars[1])
-                item['stars'] = tp[1]
-                rsts = user_info.find('div', class_='comment-rst').find_all('span', class_='rst')
-                tp = self.deal_num(rsts[0].get_text().encode('utf-8'))
-                item['label_1'] = dict()
-                item['label_1'][tp[0]] = tp[1]
+                try:
+                    stars = user_info.find('span', class_='item-rank-rst')['class']
+                    tp = self.deal_num(stars[1])
+                    item['stars'] = tp[1]
+                except:
+                    item['stars'] = ''
 
-                tp = self.deal_num(rsts[1].get_text().encode('utf-8'))
-                item['label_2'] = dict()
-                item['label_2'][tp[0]] = tp[1]
+                try:
+                    rsts = user_info.find('div', class_='comment-rst').find_all('span', class_='rst')
+                    tp = self.deal_num(rsts[0].get_text().encode('utf-8'))
+                    item['label_1'] = dict()
+                    item['label_1'][tp[0]] = tp[1]
 
-                tp = self.deal_num(rsts[2].get_text().encode('utf-8'))
-                item['label_3'] = dict()
-                item['label_3'][tp[0]] = tp[1]
+                    tp = self.deal_num(rsts[1].get_text().encode('utf-8'))
+                    item['label_2'] = dict()
+                    item['label_2'][tp[0]] = tp[1]
+
+                    tp = self.deal_num(rsts[2].get_text().encode('utf-8'))
+                    item['label_3'] = dict()
+                    item['label_3'][tp[0]] = tp[1]
+                except:
+                    item['label_1'] = ''
+                    item['label_2'] = ''
+                    item['label_3'] = ''
 
                 item['avg_cost'] = ''
                 try:
@@ -172,15 +223,28 @@ class CommentSpider(scrapy.Spider):
                     pass
 
 
-            #     yield item
-            #
-            # print 'page: ', self.page
-            # self.page += 1
-            # try:
-            #     next_page = soup.find('div', class_ = 'Pages').find('a', class_ = 'NextPage', title = '下一页')
-            #     url = self.root + next_page['href']
-            #     yield Request(url)
-            # except:
-            #     pass
+                yield item
+
+
+            print 'page: ', self.page
+            self.page += 1
+            try:
+
+                next_page = soup.find('div', class_ = 'Pages').find('a', class_ = 'NextPage')
+                url = self.shop_urls[self.cnt] + next_page['href']
+                print 'turn page to: ' + url
+                yield Request(url)
+            except:
+                # print '-------: ' + self.urls[self.cnt + 1]
+                self.page = 1
+                try:
+                    time.sleep(1)
+                    yield Request(self.urls[self.cnt])
+                    self.cnt += 1
+                except:
+                    pass
         except:
-            pass
+            print 'oh, page error'
+            time.sleep(100)
+            yield Request(str, dont_filter=True)
+            # pass

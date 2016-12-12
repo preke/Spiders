@@ -9,6 +9,8 @@ from scrapy.http import Response
 from Xiuxian.items import PromotionItem
 import re
 import requests
+import pymongo
+from scrapy.conf import settings
 
 class PromotionSpider(scrapy.Spider):
     name = "promotion"
@@ -18,12 +20,30 @@ class PromotionSpider(scrapy.Spider):
     item = PromotionItem()
     cnt = -1
     def __init__(self):
-        urlGOTs = [
-            'http://t.dianping.com/deal/10953643',
-            'http://t.dianping.com/deal/21510875'
-        ]
-        self.start_urls.append(urlGOTs[0])
-        self.urls=urlGOTs[1:]
+        connection = pymongo.MongoClient(
+            settings['MONGODB_SERVER'],
+            settings['MONGODB_PORT']
+        )
+        db = connection[settings['MONGODB_DB']]
+        sets = db['shop'].find({})
+        connection.close()
+        urls = []
+        for elem in sets:
+            try:
+                elem['prom']
+                for url in elem['prom']:
+                    if url[:27] == 'http://t.dianping.com/deal/':
+                        urls.append(url)
+            except:
+                pass
+
+        # for url in urls:
+        #     print url
+        # print len(urls)
+        urls = list(set(urls))
+
+        self.start_urls.append(urls[0])
+        self.urls = urls[1:]
 
     def find(self, s1, s2):
         for ch in s1:
@@ -40,32 +60,38 @@ class PromotionSpider(scrapy.Spider):
         return ans
 
 
-    def parse(self, response):
-        s1 = response.url
-        if self.find(s1, 'j'):
-            print s1
-            temp = response.body
-            soup = BeautifulSoup(temp, from_encoding='utf-8')
+
+    def get_ajax(self, response):
+        temp = response.body
+        soup = BeautifulSoup(temp, from_encoding='utf-8')
+        try:
             self.item['num_of_comment'] = int(soup.find('p', class_='c-num').find('b').get_text())
-            fig = soup.find('div',class_='op-statis Fix').find('div',class_='fig-show').find_all('p', class_='list')
+            fig = soup.find('div', class_='op-statis Fix').find('div', class_='fig-show').find_all('p', class_='list')
             # print len(fig)
             self.item['five_star'] = int(fig[0].find('span', class_='n-bg J_fig')['data'])
             self.item['four_star'] = int(fig[1].find('span', class_='n-bg J_fig')['data'])
             self.item['three_star'] = int(fig[2].find('span', class_='n-bg J_fig')['data'])
             self.item['two_star'] = int(fig[3].find('span', class_='n-bg J_fig')['data'])
             self.item['one_star'] = int(fig[4].find('span', class_='n-bg J_fig')['data'])
+        except:
+            self.item['num_of_comment'] = ''
+            self.item['five_star'] = ''
+            self.item['four_star'] = ''
+            self.item['three_star'] = ''
+            self.item['two_star'] = ''
+            self.item['one_star'] = ''
 
-            yield self.item
-            self.item = PromotionItem()
-            print self.urls[self.cnt]
-            self.cnt += 1
-            try:
-                yield Request(self.urls[self.cnt])
-            except:
-                pass
+        yield self.item
+        self.item = PromotionItem()
+        print self.urls[self.cnt+1]
+        self.cnt += 1
+        try:
+            yield Request(self.urls[self.cnt])
+        except:
+            pass
 
-        else:
-            print '-----: ' + s1
+    def parse(self, response):
+            s1 = response.url
             self.item['_id'] = ''
             for ch in s1:
                 try:
@@ -110,11 +136,16 @@ class PromotionSpider(scrapy.Spider):
 
             self.item['sold'] = num
 
-            star = action_box.find('span', class_='star-rate').get_text()
-            self.item['stars'] = float(star)
+            try:
+                star = action_box.find('span', class_='star-rate').get_text()
+                self.item['stars'] = float(star)
+            except:
+                self.item['stars'] = ''
 
             av_date = main.find('div', class_='validate-date').find('span').get_text()
             self.item['av_time'] = av_date
 
+
+
             url_temp = self.make_up_ajax(s1, self.item['_id'])
-            yield Request(url_temp)
+            yield Request(url_temp, callback=self.get_ajax)

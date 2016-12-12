@@ -1,8 +1,10 @@
 #!/usr/bin/python
 # -*-coding:utf-8-*-
 
-import random
+
 from scrapy.downloadermiddlewares.useragent import UserAgentMiddleware
+import random, base64
+from settings import PROXIES
 
 
 class RotateUserAgentMiddleware(UserAgentMiddleware):
@@ -12,8 +14,9 @@ class RotateUserAgentMiddleware(UserAgentMiddleware):
     def process_request(self, request, spider):
         ua = random.choice(self.user_agent_list)
         if ua:
-            # print ua, '-----------------yyyyyyyyyyyyyyyyyyyyyyyyy'
+            #print ua
             request.headers.setdefault('User-Agent', ua)
+
 
             # the default user_agent_list composes chrome,I E,firefox,Mozilla,opera,netscape
 
@@ -38,3 +41,28 @@ class RotateUserAgentMiddleware(UserAgentMiddleware):
         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.24 (KHTML, like Gecko) Chrome/19.0.1055.1 Safari/535.24", \
         "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/535.24 (KHTML, like Gecko) Chrome/19.0.1055.1 Safari/535.24"
     ]
+
+
+
+
+proxyServer = "http://proxy.abuyun.com:9010"
+
+
+proxyUser = "***"
+proxyPass = "***"
+
+proxyAuth = "Basic " + base64.b64encode(proxyUser + ":" + proxyPass)
+
+class ProxyMiddleware(object):
+     def process_request(self, request, spider):
+        request.meta["proxy"] = proxyServer
+
+        request.headers["Proxy-Authorization"] = proxyAuth
+
+class ProxyMiddleware(object):
+    cnt = 0
+    round = 0
+    def process_request(self, request, spider):
+        proxy = random.choice(PROXIES)
+        print  'By' + proxy['ip_port']
+        request.meta['proxy'] = "http://%s" % proxy['ip_port']

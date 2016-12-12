@@ -42,30 +42,10 @@ class MongoDBPipeline(object):
             self.saveOrUpdate(self.promotion_collection, item)
         elif spider.name == 'comment':
             str1 = type(item)
-            # print str1
             if str(str1) == "<class 'Xiuxian.items.CommentItem'>":
-                print 'ok'
+                self.saveOrUpdate(self.comment_collection, item)
             else:
                 self.saveOrUpdate(self.user_collection, item)
-            # if type(item) == 'CommentItem':
-            #     print '------------------------'
-            # else:
-            #     print '=========='
-            # self.saveOrUpdate(self.comment_collection, item)
-            # print
-            # print 'item-------------------------------------here'
-            # print item
-            # pass
-
-
-
-
-
-
-
-
-
-
 
 
 
