@@ -59,10 +59,10 @@ class ProxyMiddleware(object):
 
         request.headers["Proxy-Authorization"] = proxyAuth
 
-class ProxyMiddleware(object):
-    cnt = 0
-    round = 0
-    def process_request(self, request, spider):
-        proxy = random.choice(PROXIES)
-        print  'By' + proxy['ip_port']
-        request.meta['proxy'] = "http://%s" % proxy['ip_port']
+# class ProxyMiddleware(object):
+#     cnt = 0
+#     round = 0
+#     def process_request(self, request, spider):
+#         proxy = random.choice(PROXIES)
+#         print  'By' + proxy['ip_port']
+#         request.meta['proxy'] = "http://%s" % proxy['ip_port']
