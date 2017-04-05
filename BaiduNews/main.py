@@ -38,11 +38,9 @@ def crawl():
     # instant_news_list = []
     latest_news_list = []
     for li in latest_news:
-        # print li.find('span', class_='time')
-        # if len( li.find('span', class_='time').get_text()) > 5:
-        #     instant_news_list.append((li.find('a')['href'], li.find('a').get_text()))
-        # else:
-        latest_news_list.append((li.find('a')['href'], li.find('a').get_text()))
+        temp = (li.find('a')['href'], li.find('a').get_text())
+        if temp not in instant_news_list:
+            latest_news_list.append(temp)
     
     return instant_news_list, focal_news_list, hot_news_list, latest_news_list
 
