@@ -11,6 +11,15 @@ def crawl():
     response = urllib2.urlopen('http://mil.news.baidu.com/')  
     html = response.read()
     soup = BeautifulSoup(html, from_encoding='utf-8')
+    
+    #part 1
+    instant_news = soup.find('div', class_='mod').find('div', class_='bd').find_all('li')
+    instant_news_list = []
+    for li in instant_news:
+        instant_news_list.append( (li.find('a')['href'], li.find('a').get_text()) )
+    # for element in instant_news_list:
+    #     print element[0], element[1]
+    
     focal_news = soup.find('div', class_='l-left-col').find('div',class_='b-left').find_all('li')
     focal_news_list = []
     for li in focal_news:
@@ -26,14 +35,14 @@ def crawl():
     #     print element[0], element[1]
 
     latest_news = soup.find('div', id='col_latest').find_all('li')
-    instant_news_list = []
+    # instant_news_list = []
     latest_news_list = []
     for li in latest_news:
-    # print li.find('span', class_='time')
-        if len( li.find('span', class_='time').get_text()) > 5:
-            instant_news_list.append((li.find('a')['href'], li.find('a').get_text()))
-        else:
-            latest_news_list.append((li.find('a')['href'], li.find('a').get_text()))
+        # print li.find('span', class_='time')
+        # if len( li.find('span', class_='time').get_text()) > 5:
+        #     instant_news_list.append((li.find('a')['href'], li.find('a').get_text()))
+        # else:
+        latest_news_list.append((li.find('a')['href'], li.find('a').get_text()))
     
     return instant_news_list, focal_news_list, hot_news_list, latest_news_list
 
