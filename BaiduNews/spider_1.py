@@ -22,9 +22,12 @@ def parse(soup, is_homepage):
         # title: 新闻标题
         # title_url: 新闻链接
         # source_and_time: 作者/时间
+        # source: 作者
+        # time: 时间
         # summary: 摘要
         # simi_words: 相同新闻
         # simi_words_url: 相同新闻查询的url
+        # simi_words_search: cont:....
         title = result.find('h3', class_='c-title').find('a').get_text()
         title_url = result.find('h3', class_='c-title').find('a')['href']
         try:
@@ -32,18 +35,29 @@ def parse(soup, is_homepage):
         except:
             abstract = result.find('div', class_='c-span18 c-span-last').get_text()
         source_and_time = result.find('p', class_='c-author').get_text()
+        source, time = source_and_time.split(u'\xa0'u'\xa0')
         temp_abstract = abstract[len(source_and_time):]
         summary = ""
-        for word in abstract:
+        for word in temp_abstract:
             summary = summary + word
             if summary[-3:] == '...':
                 break
-        temp_list = [title, title_url, source_and_time, summary]
+        temp_list = [title, title_url, source, time, summary]
         try:
             simi_words = results[0].find('a', class_='c-more_link').get_text()
             simi_words_url = 'http://news.baidu.com' + results[0].find('a', class_='c-more_link')['href']
             temp_list.append(simi_words)
             temp_list.append(simi_words_url)
+            temp = " "
+            i = 0
+            while i != len(simi_words_url) - 1:
+                if simi_words_url[i] == '+':
+                    while simi_words_url[i] != '&':
+                        temp = temp + simi_words_url[i]
+                        i = i + 1
+                else:
+                    i = i + 1
+            temp_list.append(temp)
         except:
             pass
         ans.append(temp_list)
