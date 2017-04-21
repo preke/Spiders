@@ -34,8 +34,13 @@ def parse(soup, is_homepage):
             abstract = result.find('div', class_='c-summary c-row ').get_text()
         except:
             abstract = result.find('div', class_='c-span18 c-span-last').get_text()
-        source_and_time = result.find('p', class_='c-author').get_text()
-        source, time = source_and_time.split(u'\xa0'u'\xa0')
+        try:
+            source_and_time = result.find('p', class_='c-author').get_text()
+            source, time = source_and_time.split(u'\xa0'u'\xa0')
+        except:
+            source_and_time = ""
+            source = ""
+            time = ""
         temp_abstract = abstract[len(source_and_time):]
         summary = ""
         for word in temp_abstract:
@@ -43,12 +48,10 @@ def parse(soup, is_homepage):
             if summary[-3:] == '...':
                 break
         temp_list = [title, title_url, source, time, summary]
+        temp = " "
         try:
-            simi_words = results[0].find('a', class_='c-more_link').get_text()
-            simi_words_url = 'http://news.baidu.com' + results[0].find('a', class_='c-more_link')['href']
-            temp_list.append(simi_words)
-            temp_list.append(simi_words_url)
-            temp = " "
+            simi_words = result.find('a', class_='c-more_link').get_text()
+            simi_words_url = 'http://news.baidu.com' + result.find('a', class_='c-more_link')['href']
             i = 0
             while i != len(simi_words_url) - 1:
                 if simi_words_url[i] == '+':
@@ -57,9 +60,13 @@ def parse(soup, is_homepage):
                         i = i + 1
                 else:
                     i = i + 1
-            temp_list.append(temp)
         except:
-            pass
+            simi_words = ""
+            simi_words_url = ""
+            temp = ""
+        temp_list.append(simi_words)
+        temp_list.append(simi_words_url)
+        temp_list.append(temp)
         ans.append(temp_list)
 
     if is_homepage == 1:
@@ -95,3 +102,5 @@ def get_same(url):
     soup = crawl(url)
     ans = parse(soup, 0)
     return ans
+
+# def 
