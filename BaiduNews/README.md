@@ -60,6 +60,29 @@
 更新了`spider_1.py`的`parse()`
 修复了有些新闻内容不全导致的索引缺失问题
 
+## 4/22 更新
+
+更新了时间筛选函数`date_filter(begin_date, end_date, query_word)`
+参数是起始时间和返回时间，关键字
+返回一个请求的get请求的url
+
+还是调用百度的接口再封装
+主要工作是解析get参数，然后自己构造参数
+
+|参数|含义|
+|---|:---|
+|bt|(begin_time)起始日期）0：0：0的unix时间戳|
+|et|(end_time)结束日期）23：59：59的unix时间戳|
+|y0,m0,d0|起始日期的年，月，日|
+|y1,m1,d1|结束日期的年，月，日|
+|begin_time|起始日期的字符串形式，example:'2017-4-22'|
+|end_time|结束日期的字符串形式|
+|query_word|查询关键字|
+
+
+- 其他参数照抄
+- 这些参数在构造请求url的时候要转换成`str`形式
+- `query_word`需要用`urllib.qoute()`处理一下
 
 
 

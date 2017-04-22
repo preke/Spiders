@@ -103,4 +103,15 @@ def get_same(url):
     ans = parse(soup, 0)
     return ans
 
-# def 
+import datetime
+from urllib import quote
+def date_filter(begin_date, end_date, query_word):
+    date0 = datetime.datetime.strptime(begin_date, "%Y-%m-%d")
+    date1 = datetime.datetime.strptime(end_date + " 23:59:59", "%Y-%m-%d %H:%M:%S")
+    y0, m0, d0 = str(date0.year), str(date0.month), str(date0.day)
+    y1, m1, d1 = str(date1.year), str(date1.month), str(date1.day)
+    query_word = quote(query_word)
+    bt = str(int(time.mktime(date0.timetuple())))
+    et = str(int(time.mktime(date1.timetuple())))
+    url = 'http://news.baidu.com/ns?from=news&cl=2&bt='+ bt + '&y0='+ y0 +'&m0=' + m0 + '&d0=' + d0 + '&y1=' + y1 + '&m1=' + m1 + '&d1=' + d1 + '&et=' + et + '&q1=' + query_word + '&submit=%B0%D9%B6%C8%D2%BB%CF%C2&q3=&q4=&mt=0&lm=&s=2&begin_date=' + begin_date + '&end_date=' + end_date + '&tn=newsdy&ct1=1&ct=1&rn=20&q6='
+    return url
