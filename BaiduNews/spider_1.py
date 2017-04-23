@@ -5,6 +5,9 @@ import urllib2
 import urllib
 import urlparse
 from bs4 import BeautifulSoup
+import datetime
+from urllib import quote
+import time
 
 def crawl(url):
     user_agent = 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.86 Safari/537.36'
@@ -15,7 +18,7 @@ def crawl(url):
     soup = BeautifulSoup(html, from_encoding='utf-8')
     return soup
 
-def parse(soup, is_homepage):
+def parse(soup):
     results = soup.find('div', id='content_left').find_all('div', class_='result')
     ans = []
     for result in results:
@@ -69,25 +72,30 @@ def parse(soup, is_homepage):
         temp_list.append(temp)
         ans.append(temp_list)
 
-    if is_homepage == 1:
-        page_list = []
-        try:    
-            pages = soup.find('p', id='page').find_all('a')
-            for page in pages:
-                page_list.append('http://news.baidu.com' + page['href'])
-        except:
-            pass
+#     if is_homepage == 1:
+#         page_list = []
+#         try:    
+#             pages = soup.find('p', id='page').find_all('a')
+#             for page in pages:
+#                 page_list.append('http://news.baidu.com' + page['href'])
+#         except:
+#             pass
 
-        return page_list, ans
-    else:
-        return ans
+#         return page_list, ans
+#     else:
+    return ans
+
+# def search(query_word):
+#     word = urllib.quote(query_word)
+#     url  = 'http://news.baidu.com/ns?cl=2&tn=news&word=' + word
+#     soup = crawl(url)
+#     page_list, ans = parse(soup, 1)
+#     return page_list, ans
 
 def search(query_word):
     word = urllib.quote(query_word)
-    url  = 'http://news.baidu.com/ns?cl=2&rn=40&tn=news&word='+word+'&pn=0'
-    soup = crawl(url)
-    page_list, ans = parse(soup, 1)
-    return page_list, ans
+    url  = 'http://news.baidu.com/ns?cl=2&tn=news&word=' + word
+    return url
 
 def get_more(page_list):
     ans = []
@@ -103,8 +111,6 @@ def get_same(url):
     ans = parse(soup, 0)
     return ans
 
-import datetime
-from urllib import quote
 def date_filter(begin_date, end_date, query_word):
     date0 = datetime.datetime.strptime(begin_date, "%Y-%m-%d")
     date1 = datetime.datetime.strptime(end_date + " 23:59:59", "%Y-%m-%d %H:%M:%S")
@@ -113,5 +119,27 @@ def date_filter(begin_date, end_date, query_word):
     query_word = quote(query_word)
     bt = str(int(time.mktime(date0.timetuple())))
     et = str(int(time.mktime(date1.timetuple())))
-    url = 'http://news.baidu.com/ns?from=news&cl=2&bt='+ bt + '&y0='+ y0 +'&m0=' + m0 + '&d0=' + d0 + '&y1=' + y1 + '&m1=' + m1 + '&d1=' + d1 + '&et=' + et + '&q1=' + query_word + '&submit=%B0%D9%B6%C8%D2%BB%CF%C2&q3=&q4=&mt=0&lm=&s=2&begin_date=' + begin_date + '&end_date=' + end_date + '&tn=newsdy&ct1=1&ct=1&rn=20&q6='
+    url = 'http://news.baidu.com/ns?from=news&cl=2&bt='+ bt + '&y0='+ y0 +'&m0=' + m0 + '&d0=' + d0 + '&y1=' + y1 + '&m1=' + m1 + '&d1=' + d1 + '&et=' + et + '&q1=' + query_word + '&submit=%B0%D9%B6%C8%D2%BB%CF%C2&q3=&q4=&mt=0&lm=&s=2&begin_date=' + begin_date + '&end_date=' + end_date + '&tn=newsdy&ct1=1&ct=1'
+    return url
+
+def page_filter(url, page=0):# append url with pn and rn params
+    # rn are set to be 20
+    if page is None:
+        page = 0
+    rn = 20
+    pn = page * rn
+    rn = str(rn)
+    pn = str(pn)
+    url = url + '&pn=' + pn
+    url = url + '&rn=' + rn
+    return url
+
+def search_with_page(query_word, page=0):
+    url = search(query_word)
+    url = page_filter(url, page)
+    return url
+
+def date_filter_with_page(begin_date, end_date, query_word, page=0):
+    url = date_filter(begin_date, end_date, query_word)
+    url = page_filter(url, page)
     return url

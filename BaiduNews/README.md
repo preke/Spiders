@@ -63,7 +63,7 @@
 ## 4/22 更新
 
 更新了时间筛选函数`date_filter(begin_date, end_date, query_word)`
-参数是起始时间和返回时间，关键字
+参数是起始日期和返回日期的str格式，和下表定义的格式相同，关键字
 返回一个请求的get请求的url
 
 还是调用百度的接口再封装
@@ -83,6 +83,94 @@
 - 其他参数照抄
 - 这些参数在构造请求url的时候要转换成`str`形式
 - `query_word`需要用`urllib.qoute()`处理一下
+```python
+import datetime
+from urllib import quote
+def date_filter(begin_date, end_date, query_word):
+    date0 = datetime.datetime.strptime(begin_date, "%Y-%m-%d")
+    date1 = datetime.datetime.strptime(end_date + " 23:59:59", "%Y-%m-%d %H:%M:%S")
+    y0, m0, d0 = str(date0.year), str(date0.month), str(date0.day)
+    y1, m1, d1 = str(date1.year), str(date1.month), str(date1.day)
+    query_word = quote(query_word)
+    bt = str(int(time.mktime(date0.timetuple())))
+    et = str(int(time.mktime(date1.timetuple())))
+    url = 'http://news.baidu.com/ns?from=news&cl=2&bt='+ bt + '&y0='+ y0 +'&m0=' + m0 + '&d0=' + d0 + '&y1=' + y1 + '&m1=' + m1 + '&d1=' + d1 + '&et=' + et + '&q1=' + query_word + '&submit=%B0%D9%B6%C8%D2%BB%CF%C2&q3=&q4=&mt=0&lm=&s=2&begin_date=' + begin_date + '&end_date=' + end_date + '&tn=newsdy&ct1=1&ct=1'
+    return url
+```
+
+## 4/23 更新
+
+增加分页
+首先简单分析了一下url的参数：
+
+- `pn`是起始的新闻条目的index
+- `rn`是每页显示的新闻条目的index
+
+如果是简单的search,那么重新构造url很简单
+但是新实现的date_filter，我测试了一下，也是可以用这两个参数构造的
+
+这样我就需要想一个统一的url构造规则
+
+如果这样的话，`search`函数生成一个url,同样`date_filter`也是生成一个url
+我可以定义一个`page_filter`函数来统一处理这些url
+默认每页显示20条
+
+这样的话，所有的请求url构造都要经过这一个`page_filter`函数了。
+我把`page`默认设置为0,然后`rn`设置为20
+
+```python
+def page_filter(url, page=0):# append url with pn and rn params
+    # rn are set to be 20
+    rn = 20
+    pn = page * rn
+    rn = str(rn)
+    pn = str(pn)
+    url = url + '&pn=' + pn
+    url = url + '&rn=' + rn
+    return url
+```
+
+考虑一个异常：最后一页，应该不用管，因为总归是遍历的
+
+这样，原来的`search`函数需要改变为只返回url：
+```python
+def search(query_word):
+    word = urllib.quote(query_word)
+    url  = 'http://news.baidu.com/ns?cl=2&tn=news&word=' + word
+    return url
+```
+
+然后做一个高一点的封装：
+
+```
+def search_with_page(query_word, page=0):
+    url = search(query_word)
+    url = page_filter(url, page)
+    return url
+
+def date_filter_with_page(begin_date, end_date, query_word, page=0):
+    url = date_filter(begin_date, end_date, query_word)
+    url = page_filter(url, page)
+    return url
+```
+测试可以这样
+```
+print search_with_page('军民融合', 3)
+print 
+print date_filter_with_page('2017-1-1', '2017-1-2', '军民融合', 2)
+```
+
+`parse`的架构也变得简单点，删去`is_homepage`参数
+
+有点乱，现在理一下各个函数的功能，低耦合
+
+构造请求url:
+- `search_with_page(query_word, page=0)`
+- `date_filter_with_page(begin_date, end_date, query_word, page=0)`
+爬url:
+- `crawl(url)`
+解析生成新闻list
+- `parse(soup)`
 
 
 
